@@ -51,37 +51,14 @@
         <p><span class="tag soon">In progress</span> Research and writing for many more dog breeds are continuing, with new titles being added as they are completed.</p>
 
         <div class="btn-row">
-          <a class="btn btn-primary" href="amazon.html">Available on Amazon</a>
           <a class="btn btn-secondary" href="books-pet-animals.html">Back to Pet Animal Series</a>
         </div>
-        <p class="placeholder-note"><!-- TODO: Amazon link(s) for Dog Breeds titles --> Amazon link placeholder &mdash; to be supplied.</p>
       </div>
     </div>
 
-    <h2>A few titles from the series</h2>
-    <p>A sample of dog breed books published so far &mdash; one of around 150 uploaded.</p>
-    <div class="sample-grid">
-      <div class="sample-card">
-        <img src="assets/images/covers/dog-border-collie.jpg" alt="Border Collie book cover">
-        <span class="sample-title">Border Collie</span>
-      </div>
-      <div class="sample-card">
-        <img src="assets/images/covers/dog-bernese-mountain-dog.jpg" alt="Bernese Mountain Dog book cover">
-        <span class="sample-title">Bernese Mountain Dog</span>
-      </div>
-      <div class="sample-card">
-        <img src="assets/images/covers/dog-belgian-malinois.jpg" alt="Belgian Malinois book cover">
-        <span class="sample-title">Belgian Malinois</span>
-      </div>
-      <div class="sample-card">
-        <img src="assets/images/covers/dog-australian-kelpie.jpg" alt="Australian Kelpie book cover">
-        <span class="sample-title">Australian Kelpie</span>
-      </div>
-      <div class="sample-card">
-        <img src="assets/images/covers/dog-appenzeller-sennenhund.jpg" alt="Appenzeller Sennenhund book cover">
-        <span class="sample-title">Appenzeller Sennenhund</span>
-      </div>
-    </div>
+    <h2>Titles in the series</h2>
+    <p>A growing selection of dog breed books published so far &mdash; part of around 150 uploaded.</p>
+    <div class="amazon-grid" id="dog-breeds-grid"></div>
 
     <div class="notice">
       <strong>Coming later:</strong> a full browsable list of individual dog breed titles will be added here once the complete title list is supplied.
@@ -112,6 +89,8 @@
 </footer>
 
 <script src="assets/js/main.js"></script>
+<script src="assets/js/books.js"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script>renderBookGrid('dog-breeds-grid', 'dog-breeds');</script>
 </body>
 </html>

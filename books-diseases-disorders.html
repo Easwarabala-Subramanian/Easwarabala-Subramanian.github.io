@@ -37,7 +37,7 @@
     <p class="crumb"><a href="books.html">Books</a> &rsaquo; Diseases &amp; Disorders</p>
     <div class="book-block">
       <div class="book-cover">
-        <img src="assets/images/cover-diseases-disorders.svg" alt="Diseases &amp; Disorders series placeholder cover">
+        <img src="assets/images/covers/congenital-rubella-virus.jpg" alt="Acupressure Treatment and Food Therapy for Congenital Rubella Virus book cover">
       </div>
       <div>
         <span class="eyebrow">Reference series</span>
@@ -48,18 +48,20 @@
           <div><span class="stat-num">~700</span><span class="stat-label">Books in the series</span></div>
         </div>
 
-        <p>Because the series spans hundreds of individual titles, this page describes the collection as a whole rather than listing every book. A searchable, browsable catalogue of individual titles is planned as a future addition &mdash; see the note below.</p>
-
-        <div class="notice">
-          <strong>Coming later:</strong> a searchable/browsable list of individual titles in this series will be added here once the full title list is supplied.
-        </div>
+        <p>Because the series spans hundreds of individual titles, this page describes the collection as a whole and highlights a growing set of titles below, rather than listing every book. A searchable, browsable catalogue of the full series is planned as a future addition.</p>
 
         <div class="btn-row">
-          <a class="btn btn-primary" href="amazon.html">Available on Amazon</a>
           <a class="btn btn-secondary" href="books.html">Back to Books</a>
         </div>
-        <p class="placeholder-note"><!-- TODO: Amazon link(s) for the Diseases &amp; Disorders series --> Amazon link placeholder &mdash; to be supplied.</p>
       </div>
+    </div>
+
+    <h2>Titles in the series</h2>
+    <p>A growing selection of Diseases &amp; Disorders titles, added as they become available.</p>
+    <div class="amazon-grid" id="diseases-grid"></div>
+
+    <div class="notice">
+      <strong>Coming later:</strong> a full searchable/browsable list of all ~700 titles will be added here once the complete title list is supplied.
     </div>
   </div>
 </section>
@@ -87,6 +89,8 @@
 </footer>
 
 <script src="assets/js/main.js"></script>
+<script src="assets/js/books.js"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script>renderBookGrid('diseases-grid', 'diseases-disorders');</script>
 </body>
 </html>

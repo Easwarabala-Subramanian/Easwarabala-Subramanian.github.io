@@ -51,33 +51,14 @@
         <p><span class="tag soon">In progress</span> Research and writing for many more cat breeds are continuing, with new titles being added as they are completed.</p>
 
         <div class="btn-row">
-          <a class="btn btn-primary" href="amazon.html">Available on Amazon</a>
           <a class="btn btn-secondary" href="books-pet-animals.html">Back to Pet Animal Series</a>
         </div>
-        <p class="placeholder-note"><!-- TODO: Amazon link(s) for Cat Breeds titles --> Amazon link placeholder &mdash; to be supplied.</p>
       </div>
     </div>
 
-    <h2>A few titles from the series</h2>
-    <p>A sample of cat breed books published so far &mdash; one of around 30 uploaded.</p>
-    <div class="sample-grid">
-      <div class="sample-card">
-        <img src="assets/images/covers/cat-birman.jpg" alt="Birman Cat book cover">
-        <span class="sample-title">Birman Cat</span>
-      </div>
-      <div class="sample-card">
-        <img src="assets/images/covers/cat-aegean.jpg" alt="Aegean Cat book cover">
-        <span class="sample-title">Aegean Cat</span>
-      </div>
-      <div class="sample-card">
-        <img src="assets/images/covers/cat-american-curl.jpg" alt="American Curl book cover">
-        <span class="sample-title">American Curl</span>
-      </div>
-      <div class="sample-card">
-        <img src="assets/images/covers/cat-american-wirehair.jpg" alt="American Wirehair book cover">
-        <span class="sample-title">American Wirehair</span>
-      </div>
-    </div>
+    <h2>Titles in the series</h2>
+    <p>A growing selection of cat breed books published so far &mdash; part of around 30 uploaded.</p>
+    <div class="amazon-grid" id="cat-breeds-grid"></div>
 
     <div class="notice">
       <strong>Coming later:</strong> a full browsable list of individual cat breed titles will be added here once the complete title list is supplied.
@@ -108,6 +89,8 @@
 </footer>
 
 <script src="assets/js/main.js"></script>
+<script src="assets/js/books.js"></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script>renderBookGrid('cat-breeds-grid', 'cat-breeds');</script>
 </body>
 </html>

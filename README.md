@@ -25,11 +25,15 @@ A static personal author/portfolio website for Easwarabala Subramanian: author, 
 ├── .nojekyll                        Tells GitHub Pages not to run Jekyll processing
 ├── .gitignore
 ├── CONTENT-CHECKLIST.md             What's still needed — Amazon links, remaining cover art, etc.
+├── CONTENT-IMPORT-REPORT.md         How the first Attachments/ batch was imported into data/books.json
+├── data/
+│   └── books.json                   Catalogue entries (title, category, cover, description, Amazon link)
 ├── assets/
 │   ├── css/style.css                All site styling
 │   ├── js/main.js                   Mobile nav toggle
+│   ├── js/books.js                  Renders book cards from data/books.json by category
 │   └── images/                      Photos + book covers used by the site
-│       └── covers/                  Real book cover photos (dog/cat breeds, Vijay Book)
+│       └── covers/                  Real book cover photos (dog/cat breeds, diseases, Vijay Book)
 └── originals/                       Source files, not part of the deployed site (see below)
 ```
 
@@ -37,7 +41,7 @@ No templating engine is used — each page is a standalone HTML file sharing the
 
 ## Running locally
 
-No build step is required. From the project root, run a simple local server (opening the HTML files directly also works, but a local server avoids browser quirks with relative paths):
+No build step is required. From the project root, run a simple local server — this is required now, not just recommended: the Dog Breeds / Cat Breeds / Diseases & Disorders pages fetch `data/books.json` at runtime, which browsers block over a bare `file://` URL:
 
 ```bash
 # Python 3
@@ -75,7 +79,7 @@ One item not tracked as a `TODO` comment: the **Weekly Astrology / Positive Pape
 
 ## Source files (`originals/`)
 
-`originals/` holds files that aren't part of the deployed site: the original "about me" doc and build spec, the full-resolution author photo, and full-resolution versions of the book cover images (the site itself uses the resized, compressed copies in `assets/images/`). Keep this folder out of anything you deploy from a subfolder other than the repo root; it's harmless on GitHub Pages either way since nothing links to it.
+`originals/` holds files that aren't part of the deployed site: the original "about me" doc and build spec, the full-resolution author photo, full-resolution versions of the book cover images, and (`notes-export-attachments/`) the raw batch of cover images + description `.docx` files as originally supplied, before being processed into `data/books.json` — see `CONTENT-IMPORT-REPORT.md`. The site itself uses the resized, compressed copies in `assets/images/`. Keep this folder out of anything you deploy from a subfolder other than the repo root; it's harmless on GitHub Pages either way since nothing links to it.
 
 ## Notes on content
 
