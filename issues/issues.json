@@ -1,0 +1,15 @@
+{
+ "issues": [
+  {
+   "id": "mag",
+   "type": "magazine",
+   "title": "Magazine",
+   "issue": "",
+   "date": "2026-10-26",
+   "language": "",
+   "pageCount": 34,
+   "path": "issues/magazine/mag",
+   "cover": "pages/p001.webp"
+  }
+ ]
+}

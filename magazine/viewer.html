@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magazine · Easwarabala Subramanian</title>
+<meta property="og:type" content="article"><meta property="og:title" id="ogt" content="Magazine"><meta property="og:image" id="ogi" content="">
+<link rel="stylesheet" href="../assets/css/publisher.css">
+<style>body{margin:0;font-family:system-ui,sans-serif}.stage{cursor:default;display:flex;align-items:center;justify-content:center;touch-action:pan-y}#book{transform-origin:center;transition:transform .2s}.thumbs button{position:relative}</style></head>
+<body>
+<div class="viewer">
+  <div class="bar">
+    <button id="tt" aria-label="Show page thumbnails">☰</button>
+    <a href="index.html">← Shelf</a><span class="t" id="title"></span>
+    <button id="first" aria-label="First page">⏮</button><button id="prev" aria-label="Previous page">‹</button>
+    <span id="ctr" aria-live="polite">–</span>
+    <button id="next" aria-label="Next page">›</button><button id="last" aria-label="Last page">⏭</button>
+    <button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button>
+    <button id="play" aria-label="Autoplay slideshow">▶</button><button id="snd" aria-label="Page-turn sound" aria-pressed="true">🔊</button>
+    <button id="share" aria-label="Share link">🔗</button><button id="fs" aria-label="Fullscreen">⛶</button><a id="dlf" download hidden>⬇ PDF</a>
+  </div>
+  <div class="body"><div class="thumbs" id="thumbs"></div><div class="stage" id="stage"><div id="book"></div></div></div>
+</div>
+<p id="err" style="color:#fff;position:fixed;top:4rem;left:1rem" hidden></p>
+<script src="../assets/vendor/page-flip.browser.js"></script>
+<script type="module">
+const $ = id => document.getElementById(id);
+const id = new URLSearchParams(location.search).get('issue');
+let M, base;
+try {
+  const idx = (await (await fetch('../issues/issues.json', { cache: 'no-store' })).json()).issues;
+  const it = idx.find(i => i.id === id && i.type === 'magazine') || idx.filter(i => i.type === 'magazine')[0];
+  if (!it) throw 0;
+  base = '../' + it.path + '/'; M = await (await fetch(base + 'manifest.json')).json();
+} catch (e) { $('err').hidden = false; $('err').textContent = 'This magazine could not be found.'; throw e; }
+document.title = M.title + ' · Magazine'; $('title').textContent = M.title; $('ogt').content = M.title; $('ogi').content = new URL(base + M.pages[0].thumb, location).href;
+if (M.pdf) { $('dlf').hidden = false; $('dlf').href = base + 'source.pdf'; }
+const n = M.pages.length, p0 = M.pages[0], ratio = p0.w / p0.h;
+$('thumbs').innerHTML = M.pages.map((p, i) => `<button data-i="${i}" aria-label="Go to page ${i + 1}"><img src="${base}${p.thumb}" alt="Page ${i + 1}" loading="lazy"></button>`).join('');
+const stage = $('stage'); let zoom = 1;
+function size() { const W = stage.clientWidth - 20, H = stage.clientHeight - 20, dbl = W > 700; const h = Math.min(H, (dbl ? W / 2 : W) / ratio); return { w: Math.floor(h * ratio), h: Math.floor(h) }; }
+const s = size();
+const flip = new St.PageFlip($('book'), { width: s.w, height: s.h, size: 'stretch', minWidth: 200, maxWidth: 1600, minHeight: 280, maxHeight: 2400, showCover: true, usePortrait: true, mobileScrollSupport: false, maxShadowOpacity: 0.5, flippingTime: 800, drawShadow: true });
+flip.loadFromImages(M.pages.map(p => base + p.img));
+// page-turn sound synthesized with WebAudio (no asset needed)
+let on = true, ac;
+function swish() { if (!on) return; try { ac = ac || new AudioContext(); const len = ac.sampleRate * .25, b = ac.createBuffer(1, len, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / len) * .35; const src = ac.createBufferSource(), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1800; src.buffer = b; src.connect(f).connect(ac.destination); src.start(); } catch (e) {} }
+$('snd').onclick = () => { on = !on; $('snd').textContent = on ? '🔊' : '🔇'; $('snd').setAttribute('aria-pressed', on); };
+function upd() { const i = flip.getCurrentPageIndex(); $('ctr').textContent = `${i + 1} / ${n}`; document.querySelectorAll('#thumbs button').forEach((b, j) => b.classList.toggle('cur', j === i || (flip.getOrientation() === 'landscape' && j === i + 1 && i > 0))); history.replaceState(null, '', `#${i + 1}`); }
+flip.on('flip', upd); flip.on('changeState', st => { if (st === 'flipping') swish(); });
+flip.on('init', () => { const h = parseInt(location.hash.slice(1)); if (h > 1) flip.turnToPage(Math.min(n, h) - 1); upd(); });
+$('prev').onclick = () => flip.flipPrev(); $('next').onclick = () => flip.flipNext();
+$('first').onclick = () => flip.flip(0); $('last').onclick = () => flip.flip(n - 1);
+$('thumbs').onclick = e => { const b = e.target.closest('button'); if (b) { flip.flip(+b.dataset.i); $('thumbs').classList.remove('open'); } };
+$('tt').onclick = () => $('thumbs').classList.toggle('open');
+const z = k => { zoom = Math.max(1, Math.min(3, zoom * k)); $('book').style.transform = `scale(${zoom})`; stage.style.overflow = zoom > 1 ? 'auto' : 'hidden'; };
+$('zi').onclick = () => z(1.3); $('zo').onclick = () => z(1 / 1.3);
+let timer; $('play').onclick = () => { if (timer) { clearInterval(timer); timer = 0; $('play').textContent = '▶'; } else { $('play').textContent = '⏸'; timer = setInterval(() => flip.getCurrentPageIndex() >= n - 1 ? $('play').click() : flip.flipNext(), 3500); } };
+$('fs').onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+$('share').onclick = async () => { const u = location.href; try { if (navigator.share) await navigator.share({ title: M.title, url: u }); else { await navigator.clipboard.writeText(u); $('share').textContent = '✓'; setTimeout(() => $('share').textContent = '🔗', 1500); } } catch (e) {} };
+addEventListener('keydown', e => { if (e.key === 'ArrowRight') flip.flipNext(); else if (e.key === 'ArrowLeft') flip.flipPrev(); else if (e.key === 'Home') $('first').click(); else if (e.key === 'End') $('last').click(); else if (e.key === 'f') $('fs').click(); });
+addEventListener('resize', () => flip.update());
+</script></body></html>

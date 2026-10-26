@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publisher · Easwarabala Subramanian</title><meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Source+Serif+4:ital,wght@0,400;0,600;1,400&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/publisher.css"></head>
+<body><div id="hdr"></div>
+<section><div class="container" style="max-width:46rem">
+<h1>Publisher</h1>
+<fieldset id="setup"><legend>One-time setup</legend>
+  <p class="muted">Ask Karthik for the access code (token). You only enter it once on this device.</p>
+  <label for="tok">Access code</label><input id="tok" type="password" autocomplete="off">
+  <details><summary>Advanced</summary><label for="own">GitHub user</label><input id="own"><label for="rep">Repository</label><input id="rep"><label for="brn">Branch</label><input id="brn"></details>
+  <p><button class="btn" id="save">Save</button></p>
+</fieldset>
+<form id="f"><fieldset><legend>New issue</legend>
+  <label for="pdf">PDF file</label><input id="pdf" type="file" accept="application/pdf" required>
+  <label for="type">Type</label><select id="type"><option value="epaper">E-paper (newspaper)</option><option value="magazine">Magazine (flipbook)</option></select>
+  <label for="ttl">Title</label><input id="ttl" required>
+  <label for="iss">Issue number (optional)</label><input id="iss">
+  <label for="dt">Date</label><input id="dt" type="date" required>
+  <label for="lng">Language</label><input id="lng" value="Tamil">
+  <label><input id="allow" type="checkbox"> Allow readers to download the PDF</label>
+  <p><button class="btn" id="go">Publish</button> <button class="btn alt" type="button" id="zip">Convert &amp; download .zip (don't publish)</button></p>
+  <div class="progress" hidden><i id="bar"></i></div><p id="stat" aria-live="polite"></p>
+</fieldset></form>
+<div id="msg"></div>
+<h2>Published issues</h2><div id="issues"><p class="muted">Enter the access code to see issues.</p></div>
+</div></section>
+<div id="ftr"></div>
+<script type="module">
+import { shell, esc } from '../assets/js/pub/shell.js';
+import { convertPdf } from '../assets/js/pub/converter.js';
+import { makeZip } from '../assets/js/pub/zip.js';
+import { GH } from '../assets/js/pub/github.js';
+shell('admin/');
+const $ = id => document.getElementById(id);
+const store = { get: k => { try { return localStorage.getItem(k) } catch (e) { return null } }, set: (k, v) => { try { localStorage.setItem(k, v) } catch (e) {} } };
+$('own').value = store.get('pub.owner') || 'Easwarabala-Subramanian'; $('rep').value = store.get('pub.repo') || 'Easwarabala-Subramanian.github.io'; $('brn').value = store.get('pub.branch') || 'main';
+$('tok').value = store.get('pub.token') || ''; $('dt').valueAsDate = new Date();
+const msg = (t, k = 'err') => $('msg').innerHTML = t ? `<div class="msg ${k}" role="alert">${esc(t)}</div>` : '';
+const gh = () => { const token = $('tok').value.trim(); if (!token) throw new Error('Please enter the access code first.'); return new GH({ token, owner: $('own').value.trim(), repo: $('rep').value.trim(), branch: $('brn').value.trim() }); };
+const slug = s => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+$('save').onclick = () => { ['tok:token', 'own:owner', 'rep:repo', 'brn:branch'].forEach(p => { const [i, k] = p.split(':'); store.set('pub.' + k, $(i).value.trim()); }); msg('Saved.', 'ok'); refresh(); };
+async function refresh() {
+  try {
+    const g = gh(), idx = await g.readJson('issues/issues.json', { issues: [] });
+    $('issues').innerHTML = idx.issues.length ? '<ul class="list">' + idx.issues.map(i => `<li><span>${esc(i.title)} <span class="muted">(${i.type}, ${esc(i.date)})</span></span><span><button class="btn alt" data-r="${esc(i.id)}">Replace PDF</button> <button class="btn alt" data-d="${esc(i.id)}">Delete</button></span></li>`).join('') + '</ul>' : '<p class="muted">Nothing published yet.</p>';
+    const kb = await g.repoSizeKB(); if (kb > 800 * 1024) msg('The website is almost full (' + Math.round(kb / 1024) + ' MB). Please tell Karthik before publishing more.');
+  } catch (e) { if ($('tok').value) msg(e.message); }
+}
+$('issues').onclick = async e => {
+  const d = e.target.dataset.d, r = e.target.dataset.r;
+  try {
+    const g = gh(), idx = await g.readJson('issues/issues.json', { issues: [] });
+    if (r) { const i = idx.issues.find(x => x.id === r); $('type').value = i.type; $('ttl').value = i.title; $('iss').value = i.issue || ''; $('dt').value = i.date; $('lng').value = i.language || ''; scrollTo(0, 0); msg('Choose the new PDF, then press Publish. The old issue will be replaced.', 'ok'); }
+    if (d) {
+      const i = idx.issues.find(x => x.id === d); if (!confirm(`Delete "${i.title}" permanently from the website?`)) return;
+      const files = await g.listPaths(i.path + '/'); idx.issues = idx.issues.filter(x => x.id !== d);
+      await g.commit('Delete ' + i.title, [{ path: 'issues/issues.json', text: JSON.stringify(idx, null, 1) }], files); msg('Deleted. The site updates in 1–2 minutes.', 'ok'); refresh();
+    }
+  } catch (err) { msg(err.message); }
+};
+$('f').onsubmit = async ev => {
+  ev.preventDefault(); msg(''); $('go').disabled = true; const bar = $('bar'), set = (p, t) => { bar.parentElement.hidden = false; bar.style.width = p + '%'; $('stat').textContent = t; };
+  try {
+    const g = gh(), file = $('pdf').files[0], type = $('type').value, date = $('dt').value;
+    const id = type === 'epaper' ? date : slug($('ttl').value + ($('iss').value ? '-' + $('iss').value : '')) || date;
+    const path = `issues/${type}/${id}`;
+    const idx = await g.readJson('issues/issues.json', { issues: [] });
+    const old = idx.issues.find(i => i.id === id && i.type === type);
+    if (old && !confirm(`An issue already exists for "${id}". Replace it?`)) throw new Error('Cancelled. Nothing was changed.');
+    set(2, 'Converting pages…');
+    const pages = await convertPdf(file, (n, t) => set(2 + 55 * n / t, `Converting pages… ${n} of ${t}`));
+    pages.sort((a, b) => a.n - b.n);
+    const pad = n => String(n).padStart(3, '0'), files = [];
+    const manifest = { title: $('ttl').value, type, issue: $('iss').value, date, language: $('lng').value, pageCount: pages.length, pdf: $('allow').checked, pages: pages.map(p => ({ img: `pages/p${pad(p.n)}.${p.ext}`, thumb: `thumbs/t${pad(p.n)}.webp`, w: p.w, h: p.h, text: p.text })) };
+    pages.forEach(p => { files.push({ path: `${path}/pages/p${pad(p.n)}.${p.ext}`, blob: p.img }, { path: `${path}/thumbs/t${pad(p.n)}.webp`, blob: p.thumb }); });
+    if ($('allow').checked) files.push({ path: `${path}/source.pdf`, blob: file });
+    files.push({ path: `${path}/manifest.json`, text: JSON.stringify(manifest) });
+    const entry = { id, type, title: manifest.title, issue: manifest.issue, date, language: manifest.language, pageCount: pages.length, path, cover: manifest.pages[0].thumb.replace('thumbs/', 'thumbs/') };
+    entry.cover = manifest.pages[0].img;
+    idx.issues = idx.issues.filter(i => !(i.id === id && i.type === type)).concat(entry);
+    files.push({ path: 'issues/issues.json', text: JSON.stringify(idx, null, 1) });
+    const stale = old ? (await g.listPaths(path + '/')).filter(p => !files.some(f => f.path === p)) : [];
+    set(60, 'Uploading…');
+    await g.commit(`Publish ${manifest.title}`, files, stale, (n, t) => set(60 + 38 * n / t, `Uploading… ${n} of ${t}`));
+    set(100, 'Live! It will appear on the site in 1–2 minutes.'); msg('Published.', 'ok'); refresh();
+  } catch (e) { msg(e.message); $('stat').textContent = ''; }
+  $('go').disabled = false;
+};
+$('zip').onclick = async () => {
+  msg(''); const file = $('pdf').files[0]; if (!file) return msg('Please choose a PDF file first.');
+  $('zip').disabled = true; const bar = $('bar'), set = (p, t) => { bar.parentElement.hidden = false; bar.style.width = p + '%'; $('stat').textContent = t; };
+  try {
+    const pages = (await convertPdf(file, (n, t) => set(95 * n / t, `Converting pages… ${n} of ${t}`))).sort((a, b) => a.n - b.n), pad = n => String(n).padStart(3, '0');
+    const files = [];
+    pages.forEach(p => files.push({ path: `pages/p${pad(p.n)}.${p.ext}`, blob: p.img }, { path: `thumbs/t${pad(p.n)}.webp`, blob: p.thumb }));
+    files.push({ path: 'manifest.json', text: JSON.stringify({ title: $('ttl').value, type: $('type').value, issue: $('iss').value, date: $('dt').value, language: $('lng').value, pageCount: pages.length, pages: pages.map(p => ({ img: `pages/p${pad(p.n)}.${p.ext}`, thumb: `thumbs/t${pad(p.n)}.webp`, w: p.w, h: p.h, text: p.text })) }) });
+    const url = URL.createObjectURL(await makeZip(files)), a = document.createElement('a');
+    a.href = url; a.download = (slug($('ttl').value) || 'issue') + '.zip'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+    set(100, 'Done. Your .zip has been downloaded.');
+  } catch (e) { msg(e.message); }
+  $('zip').disabled = false;
+};
+refresh();
+</script></body></html>
